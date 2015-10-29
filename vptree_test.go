@@ -80,10 +80,10 @@ func TestEmpty(t *testing.T) {
 // the right results
 func TestSmall(t *testing.T) {
 	items := []Item{
-		Item{0xdeadbeef, "57"},
-		Item{0xcabba9e5, "28"},
-		Item{0xcafebabe, "48"},
-		Item{0xc0cac0ca, "42"},
+		Item{Sig: 0xdeadbeef, ID: "57"},
+		Item{Sig: 0xcabba9e5, ID: "28"},
+		Item{Sig: 0xcafebabe, ID: "48"},
+		Item{Sig: 0xc0cac0ca, ID: "42"},
 	}
 
 	target := uint64(0xcafef00d)

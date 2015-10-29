@@ -7,8 +7,9 @@ import (
 )
 
 type Item struct {
-	Sig uint64
-	ID  string
+	Sig  uint64
+	ID   string
+	Name string
 }
 
 func hamming(a, b uint64) float64 { return float64(HammingDistance(a, b)) }
