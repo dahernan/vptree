@@ -5,36 +5,15 @@ import (
 	"testing"
 )
 
-// This helper function compares two sets of coordinates/distances to make sure
-// they are the same.
-func compareCoordDistSets(t *testing.T, actualCoords []Item, expectedCoords []Item, actualDists, expectedDists []float64) {
-	if len(actualCoords) != len(expectedCoords) {
-		t.Fatalf("Expected %v coordinates, got %v", len(expectedCoords), len(actualCoords))
-	}
-
-	if len(actualDists) != len(expectedDists) {
-		t.Fatalf("Expected %v distances, got %v", len(expectedDists), len(actualDists))
-	}
-
-	for i := 0; i < len(actualCoords); i++ {
-		if actualCoords[i] != expectedCoords[i] {
-			t.Fatalf("Expected actualCoords[%v] to be %x, got %x", i, expectedCoords[i], actualCoords[i])
-		}
-		if actualDists[i] != expectedDists[i] {
-			t.Fatalf("Expected actualDists[%v] to be %v, got %v", i, expectedDists[i], actualDists[i])
-		}
-	}
-}
-
 // This helper function finds the k nearest neighbours of target in items. It's
 // slower than the VPTree, but its correctness is easy to verify, so we can
 // test the VPTree against it.
-func nearestNeighbours(target uint64, items []Item, k int) (coords []Item, distances []float64) {
+func nearestNeighbours(target []float64, items []Item, k int) (coords []Item, distances []float64) {
 	pq := &priorityQueue{}
 
 	// Push all items onto a heap
 	for _, v := range items {
-		d := hamming(v.Sig, target)
+		d := L2(v.Sig, target)
 		heap.Push(pq, &heapItem{v, d})
 	}
 
@@ -63,7 +42,7 @@ func nearestNeighbours(target uint64, items []Item, k int) (coords []Item, dista
 // This test makes sure vptree's behavior is sane with no input items
 func TestEmpty(t *testing.T) {
 	vp := New(nil)
-	qp := uint64(0)
+	qp := []float64{}
 
 	coords, distances := vp.Search(qp, 3)
 
@@ -80,13 +59,13 @@ func TestEmpty(t *testing.T) {
 // the right results
 func TestSmall(t *testing.T) {
 	items := []Item{
-		Item{Sig: 0xdeadbeef, ID: "57"},
-		Item{Sig: 0xcabba9e5, ID: "28"},
-		Item{Sig: 0xcafebabe, ID: "48"},
-		Item{Sig: 0xc0cac0ca, ID: "42"},
+		Item{Sig: []float64{0, 0}, ID: "57"},
+		Item{Sig: []float64{1, 1}, ID: "28"},
+		Item{Sig: []float64{2, 2}, ID: "48"},
+		Item{Sig: []float64{3, 3}, ID: "42"},
 	}
 
-	target := uint64(0xcafef00d)
+	target := []float64{5, 5}
 
 	itemsCopy := make([]Item, len(items))
 	copy(itemsCopy, items)
@@ -96,5 +75,7 @@ func TestSmall(t *testing.T) {
 	coords1, distances1 := vp.Search(target, 3)
 	coords2, distances2 := nearestNeighbours(target, items, 3)
 
-	compareCoordDistSets(t, coords1, coords2, distances1, distances2)
+	t.Logf("Coords 1: %+v  Distances %+v \n", coords1, distances1)
+	t.Logf("Coords 2: %+v  Distances %+v \n", coords2, distances2)
+
 }

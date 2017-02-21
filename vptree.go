@@ -7,12 +7,24 @@ import (
 )
 
 type Item struct {
-	Sig  uint64
+	Sig  []float64
 	ID   string
 	Name string
 }
 
+type Point []float64
+
 func hamming(a, b uint64) float64 { return float64(HammingDistance(a, b)) }
+
+// L2 returns the L2 distance of two points.
+func L2(p, q []float64) float64 {
+	s := 0.0
+	for i := 0; i < len(p); i++ {
+		d := p[i] - q[i]
+		s += d * d
+	}
+	return math.Sqrt(s)
+}
 
 type node struct {
 	Item      Item
@@ -44,7 +56,7 @@ func New(items []Item) (t *VPTree) {
 // Search searches the VP-tree for the k nearest neighbours of target. It
 // returns the up to k narest neighbours and the corresponding distances in
 // order of least distance to largest distance.
-func (vp *VPTree) Search(target uint64, k int) (results []Item, distances []float64) {
+func (vp *VPTree) Search(target []float64, k int) (results []Item, distances []float64) {
 	if k < 1 {
 		return
 	}
@@ -87,12 +99,12 @@ func (vp *VPTree) buildFromPoints(items []Item) (n *node) {
 		// closer to the node's item than the median, and one farther
 		// away.
 		median := len(items) / 2
-		pivotDist := hamming(items[median].Sig, n.Item.Sig)
+		pivotDist := L2(items[median].Sig, n.Item.Sig)
 		items[median], items[len(items)-1] = items[len(items)-1], items[median]
 
 		storeIndex := 0
 		for i := 0; i < len(items)-1; i++ {
-			if hamming(items[i].Sig, n.Item.Sig) <= pivotDist {
+			if L2(items[i].Sig, n.Item.Sig) <= pivotDist {
 				items[storeIndex], items[i] = items[i], items[storeIndex]
 				storeIndex++
 			}
@@ -100,19 +112,19 @@ func (vp *VPTree) buildFromPoints(items []Item) (n *node) {
 		items[len(items)-1], items[storeIndex] = items[storeIndex], items[len(items)-1]
 		median = storeIndex
 
-		n.Threshold = hamming(items[median].Sig, n.Item.Sig)
+		n.Threshold = L2(items[median].Sig, n.Item.Sig)
 		n.Left = vp.buildFromPoints(items[:median])
 		n.Right = vp.buildFromPoints(items[median:])
 	}
 	return
 }
 
-func (vp *VPTree) search(n *node, tau *float64, target uint64, k int, h *priorityQueue) {
+func (vp *VPTree) search(n *node, tau *float64, target []float64, k int, h *priorityQueue) {
 	if n == nil {
 		return
 	}
 
-	dist := hamming(n.Item.Sig, target)
+	dist := L2(n.Item.Sig, target)
 
 	if dist < *tau {
 		if h.Len() == k {
